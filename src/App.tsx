@@ -171,7 +171,10 @@ const App = () => {
         ) : (
           <>
             <p>You have ranked every video!</p>
-            <ResetButton onClick={handleReset} />
+            <div>
+              <ResetButton onClick={handleReset} />
+              <DownloadButton onClick={handleDownload} />
+            </div>
           </>
         )}
 
