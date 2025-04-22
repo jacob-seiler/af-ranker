@@ -77,7 +77,7 @@ const App = () => {
 
         {ranked.length > 1 && (
           <>
-            <h2 className="text-3xl font-bold mb-2 mt-6">Rankings</h2>
+            <h2 className="text-3xl font-bold mb-2 mt-6">Rankings ({ranked.length}/{videos.length})</h2>
             <Rankings videos={ranked} />
           </>
         )}

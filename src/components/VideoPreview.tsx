@@ -1,19 +1,63 @@
 import { Video } from "../App";
 
+const Badge = ({ rank }: { rank: number }) => {
+  if (rank === 1) {
+    return (
+      <div className="bg-yellow-400 w-15 h-15 rounded-full text-center absolute top-1 left-1 text-white font-extrabold leading-14 text-4xl">
+        {rank}
+      </div>
+    );
+  }
+
+  if (rank === 2) {
+    return (
+      <div className="bg-gray-400 w-15 h-15 rounded-full text-center absolute top-1 left-1 text-white font-extrabold leading-14 text-4xl">
+        {rank}
+      </div>
+    );
+  }
+
+  if (rank === 3) {
+    return (
+      <div className="bg-yellow-600 w-15 h-15 rounded-full text-center absolute top-1 left-1 text-white font-extrabold leading-14 text-4xl">
+        {rank}
+      </div>
+    );
+  }
+
+  return (
+    <div className="bg-gray-700 w-15 h-15 rounded-full text-center absolute top-1 left-1 text-white font-extrabold leading-14 text-4xl">
+      {rank}
+    </div>
+  );
+};
+
 const InnerVideoPreview = ({
   video,
   rank,
+  link,
 }: {
   video: Video;
   rank?: number;
+  link: boolean;
 }) => {
   return (
     <div className="relative">
-      {rank && <div className="bg-red-500 w-14 h-14 rounded-full text-center absolute top-1 left-1 text-white font-extrabold leading-14 text-4xl">{rank}</div>}
+      {rank && <Badge rank={rank} />}
       <img width={300} src={video.thumbnailUrl} className="rounded-md" />
       <div className="p-2">
         <p className="font-bold">{video.title}</p>
         <p className="text-zinc-700">{video.publishedAtString}</p>
+        {link && (
+          <a
+            href={video.videoUrl}
+            onClick={(e) => e.stopPropagation()}
+            target="_blank"
+            className="font-bold underline text-blue-700"
+          >
+            Video link
+          </a>
+        )}
       </div>
     </div>
   );
@@ -28,7 +72,13 @@ const VideoPreview = ({
   onClick?: () => void;
   rank?: number;
 }) => {
-  const innerVideoPreview = <InnerVideoPreview video={video} rank={rank} />;
+  const innerVideoPreview = (
+    <InnerVideoPreview
+      video={video}
+      rank={rank}
+      link={onClick ? true : false}
+    />
+  );
 
   return (
     <div className="hover:bg-zinc-100 rounded-md" style={{ width: 300 }}>
