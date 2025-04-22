@@ -4,6 +4,8 @@ import videosJSON from "../videos.json";
 import VideoGrid from "./components/VideoGrid";
 import { formatDistanceToNow } from "date-fns";
 import Ranker from "./components/Ranker";
+import ResetButton from "./components/ResetButton";
+import DownloadButton from "./components/DownloadButton";
 
 export interface Video {
   id: string;
@@ -13,18 +15,6 @@ export interface Video {
   videoUrl: string;
   thumbnailUrl: string;
 }
-
-const ResetButton = ({ onClick }: { onClick: () => void }) => {
-  return (
-    <button
-      onClick={onClick}
-      type="button"
-      className="text-gray-900 bg-white border border-gray-300 focus:outline-none hover:bg-gray-100 focus:ring-4 focus:ring-gray-100 font-medium rounded-lg text-sm px-5 py-2.5 m-2 dark:bg-gray-800 dark:text-white dark:border-gray-600 dark:hover:bg-gray-700 dark:hover:border-gray-600 dark:focus:ring-gray-700"
-    >
-      Reset Rankings
-    </button>
-  );
-};
 
 const App = () => {
   const videos: Video[] = useMemo(() => {
@@ -96,6 +86,27 @@ const App = () => {
     );
   };
 
+  const handleDownload = () => {
+    // Create CSV
+    let csv = 'Title,Url,Ranking\n';
+
+    ranked.forEach((video, rank) => {
+      csv += [video.title, video.videoUrl, rank + 1].join(',') + '\n';
+    });
+
+    // Download the file
+    const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+    const url = URL.createObjectURL(blob);
+
+    const link = document.createElement('a');
+    link.setAttribute('href', url);
+    link.setAttribute('download', 'af_rankings.csv');
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    URL.revokeObjectURL(url);
+  }
+
   return (
     <main>
       <div className="container mx-auto text-center p-4">
@@ -130,6 +141,7 @@ const App = () => {
 
         <div className="mt-8">
           <ResetButton onClick={handleReset} />
+          <DownloadButton onClick={handleDownload} />
         </div>
       </div>
     </main>
