@@ -292,11 +292,13 @@ const App = () => {
           </>
         )}
 
-        <div className="mt-8">
+        <div className="mt-8 mb-2">
           {!code && <ShareButton onClick={() => setShareModalOpen(true)} />}
           <DownloadButton onClick={handleDownload} />
           <ResetButton onClick={handleReset} />
         </div>
+
+        <p className="text-sm text-gray-600">Made by Jacob Seiler</p>
       </div>
     </main>
   );
