@@ -1,4 +1,4 @@
-import { useCallback, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import Rankings from "./components/Rankings";
 import videosJSON from "../videos.json";
 import VideoGrid from "./components/VideoGrid";
@@ -54,11 +54,52 @@ const App = () => {
     )
   );
 
+  // Load data from localstorage if present
+  useEffect(() => {
+    const localCurrent = localStorage.getItem("current");
+    const localRanked = localStorage.getItem("ranked");
+
+    // If data is missing from local storage, save initial values
+    if (!localCurrent || !localRanked) {
+      localStorage.setItem("current", JSON.stringify(current === null ? null : current.id));
+      localStorage.setItem("ranked", JSON.stringify(ranked.map(v => v.id)));
+      return;
+    }
+
+    const currentParsed: string | null = JSON.parse(localCurrent);
+    const rankedParsed: string[] = JSON.parse(localRanked);
+
+    const newCurrent = currentParsed === null ? null : videos.find(v => v.id === currentParsed);
+    const newRanked = rankedParsed.map(id => videos.find(v => v.id === id));
+
+    // Check if failed to load
+    if (newCurrent === undefined || !newRanked.every(i => i !== undefined)) {
+      console.error("Invalid data in localstorage, clearing.", currentParsed, rankedParsed);
+      localStorage.removeItem("data");
+      return;
+    }
+
+    // Load values
+    setCurrent(newCurrent);
+    setRanked(newRanked);
+    setUnranked(
+      structuredClone(
+        videos.filter(
+          (v) => (newCurrent === null || v.id !== newCurrent.id) && newRanked.every(rv => rv.id !== v.id)
+        )
+      )
+    )
+  }, [current, ranked, videos]);
+
   const handleRanked = (ranking: number) => {
     // Update ranked videos list
     setRanked((prev) => {
       const newRanked = [...prev];
       newRanked.splice(ranking, 0, structuredClone(current!));
+
+      // Update local storage
+      localStorage.setItem("ranked", JSON.stringify(newRanked.map(v => v.id)));
+
       return newRanked;
     });
 
@@ -68,11 +109,18 @@ const App = () => {
     // Check if there are more videos to rank
     if (randomVideo === undefined) {
       setCurrent(null);
+
+      // Update local storage
+      localStorage.setItem("current", JSON.stringify(null));
+
       return;
     }
 
     setCurrent(randomVideo);
     setUnranked((prev) => prev.filter((v) => v.id !== randomVideo.id));
+
+    // Update local storage
+    localStorage.setItem("current", JSON.stringify(randomVideo.id));
   };
 
   const handleReset = () => {
@@ -84,6 +132,10 @@ const App = () => {
         (v) => v.id !== randomVideos[0].id && v.id !== randomVideos[1].id
       )
     );
+
+    // Update local storage
+    localStorage.setItem("current", JSON.stringify(randomVideos[0].id));
+    localStorage.setItem("ranked", JSON.stringify([randomVideos[1].id]));
   };
 
   const handleDownload = () => {
