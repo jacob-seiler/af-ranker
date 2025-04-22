@@ -89,13 +89,18 @@ const App = () => {
         videos.filter((v) => newRanked.every((rv) => rv.id !== v.id))
       );
 
-      const newCurrent = newRanked.length === videos.length 
-        ? null 
-        : [...newUnranked].sort(() => 0.5 - Math.random()).pop() as Video;
+      const newCurrent =
+        newRanked.length === videos.length
+          ? null
+          : ([...newUnranked].sort(() => 0.5 - Math.random()).pop() as Video);
 
       setRanked(newRanked);
       setCurrent(newCurrent);
-      setUnranked(newUnranked.filter(v => (newCurrent === null || v.id !== newCurrent!.id)));
+      setUnranked(
+        newUnranked.filter(
+          (v) => newCurrent === null || v.id !== newCurrent!.id
+        )
+      );
     } catch (e) {
       console.error("Could not decode share code", e);
       window.location.search = "";
@@ -106,46 +111,36 @@ const App = () => {
   useEffect(() => {
     // Ignore if loading from code
     if (code) return;
-
-    const localCurrent = localStorage.getItem("current");
     const localRanked = localStorage.getItem("ranked");
 
     // If data is missing from local storage, return
-    if (!localCurrent || !localRanked) {
+    if (!localRanked) {
       return;
     }
 
-    const currentParsed: string | null = JSON.parse(localCurrent);
     const rankedParsed: string[] = JSON.parse(localRanked);
-
-    const newCurrent =
-      currentParsed === null
-        ? null
-        : videos.find((v) => v.id === currentParsed);
     const newRanked = rankedParsed.map((id) => videos.find((v) => v.id === id));
 
     // Check if failed to load
-    if (newCurrent === undefined || !newRanked.every((i) => i !== undefined)) {
-      console.error(
-        "Invalid data in localStorage, clearing.",
-        currentParsed,
-        rankedParsed
-      );
-      localStorage.removeItem("data");
+    if (!newRanked.every((i) => i !== undefined)) {
+      console.error("Invalid data in localStorage, clearing.", rankedParsed);
+      localStorage.removeItem("ranked");
       return;
     }
 
+    const newUnranked = structuredClone(
+      videos.filter((v) => newRanked.every((rv) => rv.id !== v.id))
+    );
+    const newCurrent =
+      newRanked.length === videos.length
+        ? null
+        : ([...newUnranked].sort(() => 0.5 - Math.random()).pop() as Video);
+
     // Load values
-    setCurrent(newCurrent);
     setRanked(newRanked);
+    setCurrent(newCurrent);
     setUnranked(
-      structuredClone(
-        videos.filter(
-          (v) =>
-            (newCurrent === null || v.id !== newCurrent.id) &&
-            newRanked.every((rv) => rv.id !== v.id)
-        )
-      )
+      newUnranked.filter((v) => newCurrent === null || v.id !== newCurrent!.id)
     );
   }, [videos, code]);
 
@@ -154,15 +149,10 @@ const App = () => {
     // Ignore if loading from code
     if (code) return;
 
-    const localCurrent = localStorage.getItem("current");
     const localRanked = localStorage.getItem("ranked");
 
     // If data is missing from local storage, save initial values
-    if (!localCurrent || !localRanked) {
-      localStorage.setItem(
-        "current",
-        JSON.stringify(current === null ? null : current.id)
-      );
+    if (!localRanked) {
       localStorage.setItem("ranked", JSON.stringify(ranked.map((v) => v.id)));
       return;
     }
@@ -190,9 +180,6 @@ const App = () => {
     if (randomVideo === undefined) {
       setCurrent(null);
 
-      // Update local storage
-      localStorage.setItem("current", JSON.stringify(null));
-
       // Remove code if present
       if (code) {
         window.location.search = "";
@@ -202,9 +189,6 @@ const App = () => {
 
     setCurrent(randomVideo);
     setUnranked((prev) => prev.filter((v) => v.id !== randomVideo.id));
-
-    // Update local storage
-    localStorage.setItem("current", JSON.stringify(randomVideo.id));
 
     // Remove code if present
     if (code) {
@@ -223,7 +207,6 @@ const App = () => {
     );
 
     // Update local storage
-    localStorage.setItem("current", JSON.stringify(randomVideos[0].id));
     localStorage.setItem("ranked", JSON.stringify([randomVideos[1].id]));
 
     // Remove any share data
