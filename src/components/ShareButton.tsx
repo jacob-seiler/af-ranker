@@ -88,14 +88,14 @@ export const ShareModal = ({
             <p className="text-base leading-relaxed text-gray-500 dark:text-gray-400">
               Your sharable link is:
             </p>
-            <textarea className="w-full border border-gray-400 rounded-sm p-2" value={url.toString()} />
+            <textarea className="w-full border border-gray-400 rounded-sm p-2 dark:text-white" value={url.toString()} />
             <p className="text-base leading-relaxed text-gray-500 dark:text-gray-400">
               Optionally, you may add a name to be included with your shared
               results:
             </p>
             <input
               type="text"
-              className="h-8 border border-gray-400 rounded-sm p-2"
+              className="h-8 border border-gray-400 rounded-sm p-2 dark:placeholder:text-gray-300"
               placeholder="Nickname"
               value={name}
               onChange={(e) => {

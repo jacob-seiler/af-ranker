@@ -242,7 +242,7 @@ const App = () => {
         onClose={() => setShareModalOpen(false)}
       />
       <div className="container mx-auto text-center p-4">
-        <h1 className="text-4xl font-extrabold mb-6">
+        <h1 className="text-4xl font-extrabold mb-6 dark:text-white">
           {`Almost Friday Sketch Ranker${code ? ` - ${name}'s Results` : ""}`}
         </h1>
 
@@ -250,7 +250,7 @@ const App = () => {
           <Ranker current={current} ranked={ranked} onRanked={handleRanked} />
         ) : (
           <>
-            {!code && <p>You have ranked every video!</p>}
+            {!code && <p className="dark:text-white">You have ranked every video!</p>}
             <div>
               {!code && <ShareButton onClick={() => setShareModalOpen(true)} />}
               <DownloadButton onClick={handleDownload} />
@@ -261,7 +261,7 @@ const App = () => {
 
         {ranked.length > 1 && (
           <>
-            <h2 className="text-3xl font-bold mb-2 mt-6">
+            <h2 className="text-3xl font-bold mb-2 mt-6 dark:text-white">
               Rankings ({ranked.length}/{videos.length})
             </h2>
             <Rankings videos={ranked} />
@@ -270,7 +270,7 @@ const App = () => {
 
         {unranked.length > 0 && (
           <>
-            <h2 className="text-3xl font-bold mb-2 mt-6">Unranked Videos</h2>
+            <h2 className="text-3xl font-bold mb-2 mt-6 dark:text-white">Unranked Videos</h2>
             <VideoGrid videos={unranked} />
           </>
         )}
@@ -281,7 +281,7 @@ const App = () => {
           <ResetButton onClick={handleReset} />
         </div>
 
-        <p className="text-sm text-gray-600">Made by Jacob Seiler</p>
+        <p className="text-sm text-gray-600 dark:text-gray-400">Made by Jacob Seiler</p>
       </div>
     </main>
   );

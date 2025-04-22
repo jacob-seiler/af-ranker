@@ -46,14 +46,14 @@ const InnerVideoPreview = ({
       {rank && <Badge rank={rank} />}
       <img width={300} src={video.thumbnailUrl} className="rounded-md" />
       <div className="p-2">
-        <p className="font-bold">{video.title}</p>
-        <p className="text-zinc-700">{video.publishedAtString}</p>
+        <p className="font-bold dark:text-white">{video.title}</p>
+        <p className="text-zinc-700 dark:text-zinc-300">{video.publishedAtString}</p>
         {link && (
           <a
             href={video.videoUrl}
             onClick={(e) => e.stopPropagation()}
             target="_blank"
-            className="font-bold underline text-blue-700"
+            className="font-bold underline text-blue-700 dark:text-blue-300"
           >
             Video link
           </a>
@@ -81,7 +81,7 @@ const VideoPreview = ({
   );
 
   return (
-    <div className="hover:bg-zinc-100 rounded-md" style={{ width: 300 }}>
+    <div className="hover:bg-zinc-100 dark:hover:bg-zinc-800 rounded-md" style={{ width: 300 }}>
       {onClick ? (
         <button className="btn" onClick={onClick}>
           {innerVideoPreview}
