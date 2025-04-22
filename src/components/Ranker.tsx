@@ -1,4 +1,4 @@
-import {  useState } from "react";
+import {  useEffect, useState } from "react";
 import { Video } from "../App";
 import VideoPreview from "./VideoPreview";
 
@@ -7,6 +7,13 @@ const Ranker = ({ current, ranked, onRanked }: { current: Video, ranked: Video[]
     const [end, setEnd] = useState(ranked.length - 1);
     const [mid, setMid] = useState(Math.floor((ranked.length - 1) / 2));
     const [count, setCount] = useState(0);
+
+    useEffect(() => {
+        setStart(0);
+        setEnd(ranked.length - 1);
+        setMid(Math.floor((ranked.length - 1) / 2));
+        setCount(0);
+    }, [ranked.length])
 
     const handleChoice = (choseCurrent: boolean) => {
         const newStart = choseCurrent ? start : mid + 1;

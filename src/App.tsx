@@ -6,6 +6,7 @@ import { formatDistanceToNow } from "date-fns";
 import Ranker from "./components/Ranker";
 import ResetButton from "./components/ResetButton";
 import DownloadButton from "./components/DownloadButton";
+import ShareButton, { ShareModal } from "./components/ShareButton";
 
 export interface Video {
   id: string;
@@ -14,6 +15,7 @@ export interface Video {
   publishedAtString: string;
   videoUrl: string;
   thumbnailUrl: string;
+  shareId: number;
 }
 
 const App = () => {
@@ -54,27 +56,81 @@ const App = () => {
     )
   );
 
-  // Load data from localstorage if present
+  const [shareModalOpen, setShareModalOpen] = useState(false);
+
+  const searchParams = new URLSearchParams(window.location.search);
+  const code = searchParams.get("code");
+  const name = searchParams.get("name") ?? "Somebody";
+
+  // Load data from code if present
   useEffect(() => {
+    // Ignore if there is no code
+    if (!code) {
+      return;
+    }
+
+    try {
+      const base64 = code.replace(/-/g, "+").replace(/_/g, "/");
+      const json = atob(base64);
+      const codeRanked: number[] = JSON.parse(json);
+
+      const newRanked = codeRanked.map((si) =>
+        videos.find((v) => v.shareId === si)
+      );
+
+      // Check if failed to load
+      if (!newRanked.every((i) => i !== undefined)) {
+        console.error("Invalid data in share code, clearing.", newRanked);
+        window.location.search = "";
+        return;
+      }
+
+      const newUnranked = structuredClone(
+        videos.filter((v) => newRanked.every((rv) => rv.id !== v.id))
+      );
+
+      const newCurrent = newRanked.length === videos.length 
+        ? null 
+        : [...newUnranked].sort(() => 0.5 - Math.random()).pop() as Video;
+
+      setRanked(newRanked);
+      setCurrent(newCurrent);
+      setUnranked(newUnranked.filter(v => (newCurrent === null || v.id !== newCurrent!.id)));
+    } catch (e) {
+      console.error("Could not decode share code", e);
+      window.location.search = "";
+    }
+  }, [code, videos]);
+
+  // Load data from localStorage if present
+  useEffect(() => {
+    // Ignore if loading from code
+    if (code) return;
+
     const localCurrent = localStorage.getItem("current");
     const localRanked = localStorage.getItem("ranked");
 
-    // If data is missing from local storage, save initial values
+    // If data is missing from local storage, return
     if (!localCurrent || !localRanked) {
-      localStorage.setItem("current", JSON.stringify(current === null ? null : current.id));
-      localStorage.setItem("ranked", JSON.stringify(ranked.map(v => v.id)));
       return;
     }
 
     const currentParsed: string | null = JSON.parse(localCurrent);
     const rankedParsed: string[] = JSON.parse(localRanked);
 
-    const newCurrent = currentParsed === null ? null : videos.find(v => v.id === currentParsed);
-    const newRanked = rankedParsed.map(id => videos.find(v => v.id === id));
+    const newCurrent =
+      currentParsed === null
+        ? null
+        : videos.find((v) => v.id === currentParsed);
+    const newRanked = rankedParsed.map((id) => videos.find((v) => v.id === id));
 
     // Check if failed to load
-    if (newCurrent === undefined || !newRanked.every(i => i !== undefined)) {
-      console.error("Invalid data in localstorage, clearing.", currentParsed, rankedParsed);
+    if (newCurrent === undefined || !newRanked.every((i) => i !== undefined)) {
+      console.error(
+        "Invalid data in localStorage, clearing.",
+        currentParsed,
+        rankedParsed
+      );
       localStorage.removeItem("data");
       return;
     }
@@ -85,11 +141,32 @@ const App = () => {
     setUnranked(
       structuredClone(
         videos.filter(
-          (v) => (newCurrent === null || v.id !== newCurrent.id) && newRanked.every(rv => rv.id !== v.id)
+          (v) =>
+            (newCurrent === null || v.id !== newCurrent.id) &&
+            newRanked.every((rv) => rv.id !== v.id)
         )
       )
-    )
-  }, [current, ranked, videos]);
+    );
+  }, [videos, code]);
+
+  // Set initial data if missing
+  useEffect(() => {
+    // Ignore if loading from code
+    if (code) return;
+
+    const localCurrent = localStorage.getItem("current");
+    const localRanked = localStorage.getItem("ranked");
+
+    // If data is missing from local storage, save initial values
+    if (!localCurrent || !localRanked) {
+      localStorage.setItem(
+        "current",
+        JSON.stringify(current === null ? null : current.id)
+      );
+      localStorage.setItem("ranked", JSON.stringify(ranked.map((v) => v.id)));
+      return;
+    }
+  }, [current, ranked, code]);
 
   const handleRanked = (ranking: number) => {
     // Update ranked videos list
@@ -98,7 +175,10 @@ const App = () => {
       newRanked.splice(ranking, 0, structuredClone(current!));
 
       // Update local storage
-      localStorage.setItem("ranked", JSON.stringify(newRanked.map(v => v.id)));
+      localStorage.setItem(
+        "ranked",
+        JSON.stringify(newRanked.map((v) => v.id))
+      );
 
       return newRanked;
     });
@@ -113,6 +193,10 @@ const App = () => {
       // Update local storage
       localStorage.setItem("current", JSON.stringify(null));
 
+      // Remove code if present
+      if (code) {
+        window.location.search = "";
+      }
       return;
     }
 
@@ -121,6 +205,11 @@ const App = () => {
 
     // Update local storage
     localStorage.setItem("current", JSON.stringify(randomVideo.id));
+
+    // Remove code if present
+    if (code) {
+      window.location.search = "";
+    }
   };
 
   const handleReset = () => {
@@ -136,44 +225,53 @@ const App = () => {
     // Update local storage
     localStorage.setItem("current", JSON.stringify(randomVideos[0].id));
     localStorage.setItem("ranked", JSON.stringify([randomVideos[1].id]));
+
+    // Remove any share data
+    window.location.search = "";
   };
 
   const handleDownload = () => {
     // Create CSV
-    let csv = 'Title,Url,Ranking\n';
+    let csv = "Title,Url,Ranking\n";
 
     ranked.forEach((video, rank) => {
-      csv += [video.title, video.videoUrl, rank + 1].join(',') + '\n';
+      csv += [video.title, video.videoUrl, rank + 1].join(",") + "\n";
     });
 
     // Download the file
-    const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+    const blob = new Blob([csv], { type: "text/csv;charset=utf-8;" });
     const url = URL.createObjectURL(blob);
 
-    const link = document.createElement('a');
-    link.setAttribute('href', url);
-    link.setAttribute('download', 'af_rankings.csv');
+    const link = document.createElement("a");
+    link.setAttribute("href", url);
+    link.setAttribute("download", "af_rankings.csv");
     document.body.appendChild(link);
     link.click();
     document.body.removeChild(link);
     URL.revokeObjectURL(url);
-  }
+  };
 
   return (
     <main>
+      <ShareModal
+        ranked={ranked}
+        visible={shareModalOpen}
+        onClose={() => setShareModalOpen(false)}
+      />
       <div className="container mx-auto text-center p-4">
         <h1 className="text-4xl font-extrabold mb-6">
-          Almost Friday Sketch Ranker
+          {`Almost Friday Sketch Ranker${code ? ` - ${name}'s Results` : ""}`}
         </h1>
 
         {current !== null ? (
           <Ranker current={current} ranked={ranked} onRanked={handleRanked} />
         ) : (
           <>
-            <p>You have ranked every video!</p>
+            {!code && <p>You have ranked every video!</p>}
             <div>
-              <ResetButton onClick={handleReset} />
+              {!code && <ShareButton onClick={() => setShareModalOpen(true)} />}
               <DownloadButton onClick={handleDownload} />
+              <ResetButton onClick={handleReset} />
             </div>
           </>
         )}
@@ -195,8 +293,9 @@ const App = () => {
         )}
 
         <div className="mt-8">
-          <ResetButton onClick={handleReset} />
+          {!code && <ShareButton onClick={() => setShareModalOpen(true)} />}
           <DownloadButton onClick={handleDownload} />
+          <ResetButton onClick={handleReset} />
         </div>
       </div>
     </main>
