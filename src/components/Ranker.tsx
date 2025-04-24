@@ -44,9 +44,9 @@ const Ranker = ({ current, ranked, onRanked }: { current: Video, ranked: Video[]
     return (
         <div>
             <div className="flex justify-center">
-                <VideoPreview video={current} onClick={() => handleChoice(true)} />
+                <VideoPreview video={current} onClick={() => handleChoice(true)} rank={0} />
                 <p className="my-16 mx-4 dark:text-white">OR</p>
-                <VideoPreview video={ranked[mid]} onClick={() => handleChoice(false)} />
+                <VideoPreview video={ranked[mid]} onClick={() => handleChoice(false)} rank={0} />
             </div>
             <p className="dark:text-white">{count + 1} of up to {maxComparisons} matchups for current video</p>
         </div>

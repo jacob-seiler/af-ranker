@@ -64,6 +64,12 @@ const App = () => {
   const code = searchParams.get("code");
   const name = searchParams.get("name") ?? "Somebody";
 
+  const removeCodeIfPresent = useCallback(() => {
+    if (code) {
+      window.history.replaceState(null, "", "?");
+    }
+  }, [code]);
+
   // Load data from code if present
   useEffect(() => {
     // Ignore if there is no code
@@ -83,7 +89,7 @@ const App = () => {
       // Check if failed to load
       if (!newRanked.every((i) => i !== undefined)) {
         console.error("Invalid data in share code, clearing.", newRanked);
-        window.location.search = "";
+        removeCodeIfPresent();
         return;
       }
 
@@ -105,9 +111,9 @@ const App = () => {
       );
     } catch (e) {
       console.error("Could not decode share code", e);
-      window.location.search = "";
+      removeCodeIfPresent();
     }
-  }, [code, videos]);
+  }, [code, removeCodeIfPresent, videos]);
 
   // Load data from localStorage if present
   useEffect(() => {
@@ -181,21 +187,13 @@ const App = () => {
     // Check if there are more videos to rank
     if (randomVideo === undefined) {
       setCurrent(null);
-
-      // Remove code if present
-      if (code) {
-        window.location.search = "";
-      }
+      removeCodeIfPresent();
       return;
     }
 
     setCurrent(randomVideo);
     setUnranked((prev) => prev.filter((v) => v.id !== randomVideo.id));
-
-    // Remove code if present
-    if (code) {
-      window.location.search = "";
-    }
+    removeCodeIfPresent();
   };
 
   const handleReset = () => {
@@ -211,16 +209,15 @@ const App = () => {
     // Update local storage
     localStorage.setItem("ranked", JSON.stringify([randomVideos[1].id]));
 
-    // Remove any share data
-    window.location.search = "";
+    removeCodeIfPresent();
   };
 
   const handleDownload = () => {
     // Create CSV
-    let csv = "Title,Url,Ranking\n";
+    let csv = "Title,Url,Ranking,Published\n";
 
     ranked.forEach((video, rank) => {
-      csv += [video.title, video.videoUrl, rank + 1].join(",") + "\n";
+      csv += [video.title, video.videoUrl, rank + 1, video.publishedAt.toDateString()].join(",") + "\n";
     });
 
     // Download the file
@@ -235,6 +232,39 @@ const App = () => {
     document.body.removeChild(link);
     URL.revokeObjectURL(url);
   };
+
+  const hanleReRank = (id: string) => {
+    const newCurrent = videos.find(v => v.id === id);
+
+    if (!newCurrent) {
+      console.error("Something went wrong re-ranking", id);
+      return;
+    }
+
+    setRanked(prev => {
+      const newRanked = structuredClone(prev).filter(v => v.id !== newCurrent.id);
+
+      // Update local storage
+      localStorage.setItem(
+        "ranked",
+        JSON.stringify(newRanked.map((v) => v.id))
+      );
+
+      return newRanked;
+    });
+    setUnranked(prev => {
+      const newUnranked = structuredClone(prev).filter(v => v.id !== newCurrent.id);
+
+      // If current is not null, put back into unranked
+      if (current) {
+        newUnranked.push(current);
+      }
+
+      return newUnranked.sort((a, b) => b.publishedAt.getTime() - a.publishedAt.getTime())
+    });
+    setCurrent(newCurrent);
+    removeCodeIfPresent();
+  }
 
   return (
     <main>
@@ -266,14 +296,14 @@ const App = () => {
             <h2 className="text-3xl font-bold mb-2 mt-6 dark:text-white">
               Rankings ({ranked.length}/{videos.length})
             </h2>
-            <Rankings videos={ranked} />
+            <Rankings videos={ranked} onClick={hanleReRank} />
           </>
         )}
 
         {unranked.length > 0 && (
           <>
             <h2 className="text-3xl font-bold mb-2 mt-6 dark:text-white">Unranked Videos</h2>
-            <VideoGrid videos={unranked} />
+            <VideoGrid videos={unranked} onClick={hanleReRank} />
           </>
         )}
 
