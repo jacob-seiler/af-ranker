@@ -1,32 +1,10 @@
 import { Video } from "../App";
 
 const Badge = ({ rank }: { rank: number }) => {
-  if (rank === 1) {
-    return (
-      <div className="bg-yellow-400 w-15 h-15 rounded-full text-center absolute top-1 left-1 text-white font-extrabold leading-14 text-4xl">
-        {rank}
-      </div>
-    );
-  }
-
-  if (rank === 2) {
-    return (
-      <div className="bg-gray-400 w-15 h-15 rounded-full text-center absolute top-1 left-1 text-white font-extrabold leading-14 text-4xl">
-        {rank}
-      </div>
-    );
-  }
-
-  if (rank === 3) {
-    return (
-      <div className="bg-yellow-600 w-15 h-15 rounded-full text-center absolute top-1 left-1 text-white font-extrabold leading-14 text-4xl">
-        {rank}
-      </div>
-    );
-  }
+  const colours = ["bg-yellow-400", "bg-gray-400", "bg-yellow-600"];
 
   return (
-    <div className="bg-gray-700 w-15 h-15 rounded-full text-center absolute top-1 left-1 text-white font-extrabold leading-14 text-4xl">
+    <div className={`${colours[rank - 1] ?? "bg-gray-700"} w-15 h-15 rounded-full text-center absolute top-1 left-1 text-white font-extrabold leading-14 text-4xl`}>
       {rank}
     </div>
   );
