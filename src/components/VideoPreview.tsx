@@ -30,7 +30,7 @@ const VideoPreview = ({
     >
       <button className="group cursor-pointer" onClick={onClick}>
         <div className="relative">
-          {rank ? <Badge rank={rank} /> : null}
+          {(rank && rank > 0) ? <Badge rank={rank} /> : null}
           <img width={300} src={video.thumbnailUrl} className="rounded-md group-[:hover:not(:has(a:hover))]:brightness-50" />
           <p className="hidden group-[:hover:not(:has(a:hover))]:block absolute top-1/2 left-1/2 -translate-1/2 text-white mx-auto font-bold uppercase">Click to {rank === -1 ? "Vote For" : rank ? "Re-Rank" : "Rank"} Video</p>
         </div>
