@@ -21,11 +21,13 @@ export interface Video {
 const App = () => {
   const videos: Video[] = useMemo(() => {
     return videosJSON.map((video) => ({
+      thumbnailUrl: `https://img.youtube.com/vi/${video.id}/maxresdefault.jpg`,
       ...video,
       publishedAt: new Date(video.publishedAt),
       publishedAtString: formatDistanceToNow(new Date(video.publishedAt), {
         addSuffix: true,
       }),
+      videoUrl: `https://www.youtube.com/watch?v=${video.id}`,
     }));
   }, []);
 
